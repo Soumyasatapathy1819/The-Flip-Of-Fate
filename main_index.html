@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flip of Fate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa; /* A very light grey background */
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #8A2BE2, #4682B4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+        .welcome-badge {
+            background: linear-gradient(90deg, rgba(238, 230, 255, 0.8), rgba(225, 235, 255, 0.8));
+            box-shadow: 0 2px 10px rgba(150, 100, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+        /* Styles for Game Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #1e293b; /* slate-800 */
+            color: white;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            width: 90%;
+            max-width: 600px; /* Increased width for the new game */
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+        /* Dice styles */
+        .dice-container {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+        .dice {
+            width: 80px;
+            height: 80px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1e293b;
+            border: 2px solid #cbd5e1;
+        }
+        /* Number Line Game Styles */
+        #number-line-container {
+            display: flex;
+            height: 60px;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            border: 2px solid #475569; /* slate-600 */
+        }
+        .segment {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: 600;
+            background-color: #334155; /* slate-700 */
+            border-left: 1px solid #475569;
+        }
+        .segment:first-child {
+            border-left: none;
+        }
+        .segment:hover {
+            background-color: #475569; /* slate-600 */
+        }
+        .segment.selected {
+            background-color: #f59e0b; /* amber-500 */
+            color: #1e293b;
+        }
+        .segment.correct {
+            background-color: #22c55e !important; /* green-500 */
+            color: white !important;
+        }
+        .segment.incorrect {
+            background-color: #ef4444 !important; /* red-500 */
+            color: white !important;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-12 md:py-20">
+
+        <!-- Header Section -->
+        <header class="text-center mb-12 md:mb-16">
+            <div class="inline-flex items-center welcome-badge text-sm font-medium text-purple-800 px-4 py-2 rounded-full mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-yellow-500 fill-yellow-400"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.77 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                Welcome to NeonBets
+            </div>
+            <h1 class="text-5xl md:text-7xl font-extrabold gradient-text tracking-tight">
+                Flip of Fate
+            </h1>
+            <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-500">
+                Experience the thrill of premium casino games with stunning visuals and fair play.
+            </p>
+        </header>
+
+        <!-- Stats Section -->
+        <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-12 md:mb-16">
+            <!-- Stat Card 1: Current Balance -->
+            <div class="bg-yellow-100/60 p-6 rounded-2xl shadow-sm">
+                <div class="flex items-center justify-center bg-yellow-200/70 w-12 h-12 rounded-xl mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-600"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>
+                </div>
+                <p class="text-4xl font-bold text-yellow-900"><span class="text-3xl align-top">₹</span><span class="stat-number" data-stat="current-balance" data-target="100">100</span></p>
+                <p class="text-yellow-700 font-medium">Current Balance</p>
+            </div>
+            <!-- Stat Card 2: Games Played -->
+            <div class="bg-violet-100/60 p-6 rounded-2xl shadow-sm">
+                <div class="flex items-center justify-center bg-violet-200/70 w-12 h-12 rounded-xl mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-violet-600"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6m12 5h1.5a2.5 2.5 0 0 0 0-5H18M7 14v-1a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1m-6 7v-4m-3 4v-4m6 4v-4m-9 0h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2Z"></path></svg>
+                </div>
+                <p class="text-4xl font-bold text-violet-900 stat-number" data-stat="games-played" data-target="0">0</p>
+                <p class="text-violet-700 font-medium">Games Played</p>
+            </div>
+            <!-- Stat Card 3: Total Wagered -->
+            <div class="bg-blue-100/60 p-6 rounded-2xl shadow-sm">
+                <div class="flex items-center justify-center bg-blue-200/70 w-12 h-12 rounded-xl mb-4">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                </div>
+                <p class="text-4xl font-bold text-blue-900"><span class="text-3xl align-top">₹</span><span class="stat-number" data-stat="total-wagered" data-target="0">0</span></p>
+                <p class="text-blue-700 font-medium">Total Wagered</p>
+            </div>
+            <!-- Stat Card 4: Total Won -->
+            <div class="bg-green-100/60 p-6 rounded-2xl shadow-sm">
+                <div class="flex items-center justify-center bg-green-200/70 w-12 h-12 rounded-xl mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-600"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                </div>
+                <p class="text-4xl font-bold text-green-900"><span class="text-3xl align-top">₹</span><span class="stat-number" data-stat="total-won" data-target="0">0</span></p>
+                <p class="text-green-700 font-medium">Total Won</p>
+            </div>
+            <!-- Stat Card 5: Win Rate -->
+            <div class="bg-rose-100/60 p-6 rounded-2xl shadow-sm">
+                <div class="flex items-center justify-center bg-rose-200/70 w-12 h-12 rounded-xl mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-rose-600"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.77 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                </div>
+                <p class="text-4xl font-bold text-rose-900"><span class="stat-number" data-stat="win-rate" data-target="0.0" data-decimal="true">0.0</span>%</p>
+                <p class="text-rose-700 font-medium">Win Rate</p>
+            </div>
+        </section>
+
+        <!-- Games Section -->
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Game Card 1: Seven Up/Down -->
+            <div id="seven-up-down-card" class="bg-slate-800 p-8 rounded-3xl text-white card-hover">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-600 shadow-lg shadow-fuchsia-500/30">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="10" height="10" rx="2" ry="2"></rect></svg>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="bg-purple-400/20 text-purple-300 text-xs font-semibold px-3 py-1 rounded-full">Up to 5x</span>
+                        <span class="bg-sky-400/20 text-sky-300 text-xs font-semibold px-3 py-1 rounded-full">Easy</span>
+                    </div>
+                </div>
+                <h2 class="text-3xl font-bold mb-2">Seven Up/Down</h2>
+                <p class="text-slate-400">Predict if the dice roll will be above, below, or exactly 7.</p>
+            </div>
+
+            <!-- Game Card 2: Bluff Your Luck -->
+            <div id="bluff-luck-card" class="bg-slate-800 p-8 rounded-3xl text-white card-hover">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="bg-purple-400/20 text-purple-300 text-xs font-semibold px-3 py-1 rounded-full">4x Payout</span>
+                        <span class="bg-amber-400/20 text-amber-300 text-xs font-semibold px-3 py-1 rounded-full">Medium</span>
+                    </div>
+                </div>
+                <h2 class="text-3xl font-bold mb-2">Bluff Your Luck</h2>
+                <p class="text-slate-400">Is the computer bluffing? Guess right to win big.</p>
+            </div>
+
+            <!-- NEW Game Card 3: Range Riddle -->
+            <div id="number-line-card" class="bg-slate-800 p-8 rounded-3xl text-white card-hover">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg shadow-emerald-500/30">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="bg-purple-400/20 text-purple-300 text-xs font-semibold px-3 py-1 rounded-full">Up to 16x</span>
+                        <span class="bg-rose-400/20 text-rose-300 text-xs font-semibold px-3 py-1 rounded-full">Hard</span>
+                    </div>
+                </div>
+                <h2 class="text-3xl font-bold mb-2">Range Riddle</h2>
+                <p class="text-slate-400">Guess the correct number range to multiply your bet.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Seven Up/Down Game Modal -->
+    <div id="seven-up-down-modal" class="modal-overlay">
+        <div class="modal-content text-center" style="max-width: 500px;">
+            <h2 class="text-3xl font-bold mb-2 gradient-text">Seven Up / Down</h2>
+            <p class="text-slate-400 mb-6">Place your bet and roll the dice!</p>
+            
+            <div class="mb-6">
+                <p class="text-lg">Your Balance: <span id="seven-up-down-balance" class="font-bold text-yellow-400">₹100</span></p>
+            </div>
+
+            <div class="dice-container mb-6">
+                <div id="dice1" class="dice">?</div>
+                <div id="dice2" class="dice">?</div>
+            </div>
+
+             <div class="mb-4">
+                <label for="bet-amount" class="text-slate-400">Bet Amount (₹10 - ₹500)</label>
+                <input type="number" id="bet-amount" class="w-full bg-slate-700 text-white p-2 rounded-lg mt-1 text-center" value="10" min="10" max="500">
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <button data-bet="down" class="bet-option bg-sky-500 hover:bg-sky-600 p-3 rounded-lg transition">BELOW 7 (2x)</button>
+                <button data-bet="seven" class="bet-option bg-fuchsia-500 hover:bg-fuchsia-600 p-3 rounded-lg transition">LUCKY 7 (5x)</button>
+                <button data-bet="up" class="bet-option bg-rose-500 hover:bg-rose-600 p-3 rounded-lg transition">ABOVE 7 (2x)</button>
+            </div>
+            
+            <p id="seven-up-down-result" class="h-6 mb-4 text-lg font-semibold"></p>
+            
+            <button id="roll-dice-btn" class="w-full bg-green-500 hover:bg-green-600 p-4 rounded-lg font-bold text-lg transition disabled:bg-slate-500 disabled:cursor-not-allowed" disabled>Select a bet</button>
+            <button id="close-seven-up-down" class="w-full mt-2 bg-slate-600 hover:bg-slate-700 p-2 rounded-lg transition">Close</button>
+        </div>
+    </div>
+
+    <!-- Bluff Your Luck Game Modal -->
+    <div id="bluff-luck-modal" class="modal-overlay">
+        <div class="modal-content text-center" style="max-width: 500px;">
+            <h2 class="text-3xl font-bold mb-2 gradient-text">Bluff Your Luck</h2>
+            <p class="text-slate-400 mb-2">Guess if the computer's hand is a bluff or the real deal.</p>
+             <div class="mb-4">
+                <p class="text-lg">Your Balance: <span id="bluff-luck-balance" class="font-bold text-yellow-400">₹100</span></p>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-slate-400 mb-2">Computer's Hand:</p>
+                <div id="bl-computer-hand" class="dice-container">
+                    <div class="dice">?</div>
+                    <div class="dice">?</div>
+                    <div class="dice">?</div>
+                </div>
+            </div>
+
+            <div id="bl-actual-hand-container" class="mb-6 hidden">
+                 <p class="text-slate-400 mb-2">Actual Hand:</p>
+                 <div id="bl-actual-hand" class="dice-container opacity-70">
+                    <div class="dice">?</div>
+                    <div class="dice">?</div>
+                    <div class="dice">?</div>
+                 </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="bluff-luck-bet-amount" class="text-slate-400">Bet Amount</label>
+                <input type="number" id="bluff-luck-bet-amount" class="w-full bg-slate-700 text-white p-2 rounded-lg mt-1 text-center" value="10" min="1">
+            </div>
+
+            <p id="bluff-luck-result" class="h-6 mb-4 text-lg font-semibold"></p>
+            
+            <button id="bl-start-btn" class="w-full bg-blue-500 hover:bg-blue-600 p-4 rounded-lg font-bold text-lg transition">Start Round</button>
+            <div id="bl-guess-buttons" class="grid grid-cols-2 gap-4 mt-4 hidden">
+                 <button id="bl-guess-bluff" class="bg-rose-500 hover:bg-rose-600 p-3 rounded-lg transition">It's a Bluff!</button>
+                 <button id="bl-guess-no-bluff" class="bg-green-500 hover:bg-green-600 p-3 rounded-lg transition">Not a Bluff</button>
+            </div>
+
+            <button id="close-bluff-luck" class="w-full mt-2 bg-slate-600 hover:bg-slate-700 p-2 rounded-lg transition">Close</button>
+        </div>
+    </div>
+
+    <!-- Range Riddle Game Modal -->
+    <div id="number-line-modal" class="modal-overlay">
+        <div class="modal-content text-center">
+            <h2 class="text-3xl font-bold mb-2 gradient-text">Range Riddle</h2>
+            <p class="text-slate-400 mb-4">Pick a risk, place your bet, and guess the range!</p>
+            
+            <div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl mb-6">
+                <p class="text-lg">Your Wallet: <span id="nl-wallet" class="font-bold text-yellow-400">₹100</span></p>
+                <button id="nl-reset-btn" class="bg-rose-500 hover:bg-rose-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Reset</button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="nl-bet-amount" class="text-slate-400 block mb-1">Bet Amount</label>
+                    <input type="number" id="nl-bet-amount" class="w-full bg-slate-700 text-white p-2 rounded-lg text-center" value="10" min="1">
+                </div>
+                <div>
+                    <label class="text-slate-400 block mb-1">Choose Risk Multiplier</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button class="nl-multiplier-btn bg-slate-600 hover:bg-slate-500 p-2 rounded-lg transition" data-multiplier="2">2x</button>
+                        <button class="nl-multiplier-btn bg-slate-600 hover:bg-slate-500 p-2 rounded-lg transition" data-multiplier="4">4x</button>
+                        <button class="nl-multiplier-btn bg-slate-600 hover:bg-slate-500 p-2 rounded-lg transition" data-multiplier="8">8x</button>
+                        <button class="nl-multiplier-btn bg-slate-600 hover:bg-slate-500 p-2 rounded-lg transition" data-multiplier="16">16x</button>
+                    </div>
+                </div>
+            </div>
+
+            <p id="nl-message" class="h-12 text-lg font-semibold flex items-center justify-center"></p>
+            
+            <div id="number-line-container" class="mb-6 h-16 flex items-center justify-center text-slate-400">
+                Choose a multiplier to begin.
+            </div>
+            
+            <button id="close-number-line" class="w-full mt-2 bg-slate-600 hover:bg-slate-700 p-2 rounded-lg transition">Close</button>
+        </div>
+    </div>
+
+
+    <!-- JavaScript for all logic -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // --- Global Stat Elements ---
+            const balanceStatEl = document.querySelector('[data-stat="current-balance"]');
+            const gamesPlayedStatEl = document.querySelector('[data-stat="games-played"]');
+            const totalWageredStatEl = document.querySelector('[data-stat="total-wagered"]');
+            const totalWonStatEl = document.querySelector('[data-stat="total-won"]');
+            const winRateStatEl = document.querySelector('[data-stat="win-rate"]');
+            
+            // --- Stat counter animation ---
+            const counters = document.querySelectorAll('.stat-number');
+            const speed = 200; 
+
+            const animateCounter = (counter) => {
+                const target = +counter.getAttribute('data-target');
+                const isDecimal = counter.hasAttribute('data-decimal');
+                let count = +counter.innerText.replace(/,/g, '') || 0; // Start from current number
+                const updateCount = () => {
+                    const increment = (target - count) / speed;
+                    if (Math.abs(target - count) < 1 && !isDecimal) {
+                         counter.innerText = target.toLocaleString();
+                         return;
+                    }
+                     if (Math.abs(target-count) < 0.1 && isDecimal) {
+                        counter.innerText = target.toFixed(1);
+                        return;
+                    }
+
+                    count += increment;
+                    counter.innerText = isDecimal ? count.toFixed(1) : Math.ceil(count).toLocaleString();
+                    requestAnimationFrame(updateCount);
+                };
+                updateCount();
+            };
+
+            // This observer is for the initial animation on page load
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        animateCounter(entry.target);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            // --- Modal Handling ---
+            const sevenUpDownModal = document.getElementById('seven-up-down-modal');
+            const bluffLuckModal = document.getElementById('bluff-luck-modal');
+            const numberLineModal = document.getElementById('number-line-modal');
+
+            document.getElementById('seven-up-down-card').addEventListener('click', () => {
+                updateSevenUpDownBalance();
+                sevenUpDownModal.classList.add('visible');
+            });
+            document.getElementById('bluff-luck-card').addEventListener('click', () => {
+                updateBluffLuckBalance();
+                bluffLuckModal.classList.add('visible')
+            });
+            document.getElementById('number-line-card').addEventListener('click', () => numberLineModal.classList.add('visible'));
+            
+            document.getElementById('close-seven-up-down').addEventListener('click', () => sevenUpDownModal.classList.remove('visible'));
+            document.getElementById('close-bluff-luck').addEventListener('click', () => bluffLuckModal.classList.remove('visible'));
+            document.getElementById('close-number-line').addEventListener('click', () => numberLineModal.classList.remove('visible'));
+            
+            // --- Seven Up/Down Game Logic ---
+            const sevenUpDownBalanceEl = document.getElementById('seven-up-down-balance');
+            const betAmountEl = document.getElementById('bet-amount');
+            const betOptions = document.querySelectorAll('.bet-option');
+            const rollDiceBtn = document.getElementById('roll-dice-btn');
+            const resultEl = document.getElementById('seven-up-down-result');
+            const dice1El = document.getElementById('dice1');
+            const dice2El = document.getElementById('dice2');
+
+            let currentBet = null;
+
+            function updateSevenUpDownBalance() {
+                if(gameStats.wallet) {
+                    sevenUpDownBalanceEl.textContent = `₹${gameStats.wallet}`;
+                }
+            }
+
+            betOptions.forEach(button => {
+                button.addEventListener('click', () => {
+                    betOptions.forEach(btn => btn.classList.remove('ring-4', 'ring-yellow-400'));
+                    button.classList.add('ring-4', 'ring-yellow-400');
+                    currentBet = button.dataset.bet;
+                    rollDiceBtn.disabled = false;
+                    rollDiceBtn.textContent = 'Roll the Dice!';
+                });
+            });
+
+            rollDiceBtn.addEventListener('click', () => {
+                const betAmount = parseInt(betAmountEl.value);
+                if (betAmount < 10 || betAmount > 500) {
+                    resultEl.textContent = 'Invalid bet amount.';
+                    resultEl.classList.add('text-red-500');
+                    return;
+                }
+                if (betAmount > gameStats.wallet) {
+                    resultEl.textContent = "You don't have enough funds!";
+                    resultEl.classList.add('text-red-500');
+                    return;
+                }
+
+                gameStats.wallet -= betAmount;
+                updateSevenUpDownBalance();
+                rollDiceBtn.disabled = true;
+                resultEl.textContent = 'Rolling...';
+                resultEl.classList.remove('text-red-500', 'text-green-500');
+                
+                gameStats.gamesPlayed++;
+                gameStats.totalWagered += betAmount;
+
+                const d1 = Math.floor(Math.random() * 6) + 1;
+                const d2 = Math.floor(Math.random() * 6) + 1;
+                const total = d1 + d2;
+
+                setTimeout(() => {
+                    dice1El.textContent = d1;
+                    dice2El.textContent = d2;
+                    let outcome = '';
+                    if (total < 7) outcome = 'down';
+                    if (total === 7) outcome = 'seven';
+                    if (total > 7) outcome = 'up';
+
+                    if (outcome === currentBet) {
+                        const payout = currentBet === 'seven' ? 5 : 2;
+                        const winnings = betAmount * payout;
+                        gameStats.wallet += winnings;
+                        gameStats.gamesWon++;
+                        gameStats.totalWon += winnings;
+                        resultEl.textContent = `You won ₹${winnings}!`;
+                        resultEl.classList.add('text-green-500');
+                    } else {
+                        resultEl.textContent = `You lost ₹${betAmount}.`;
+                        resultEl.classList.add('text-red-500');
+                    }
+                    updateSevenUpDownBalance();
+                    rollDiceBtn.disabled = false;
+                    saveGameStats();
+                    updateMainStatsUI();
+                }, 1000);
+            });
+
+            // --- Bluff Your Luck Game Logic ---
+            const bluffLuckBalanceEl = document.getElementById('bluff-luck-balance');
+            const bluffLuckBetAmountEl = document.getElementById('bluff-luck-bet-amount');
+            const blStartBtn = document.getElementById('bl-start-btn');
+            const blGuessButtons = document.getElementById('bl-guess-buttons');
+            const blGuessBluffBtn = document.getElementById('bl-guess-bluff');
+            const blGuessNoBluffBtn = document.getElementById('bl-guess-no-bluff');
+            const blComputerHandDiv = document.getElementById('bl-computer-hand');
+            const blActualHandContainer = document.getElementById('bl-actual-hand-container');
+            const blActualHandDiv = document.getElementById('bl-actual-hand');
+            const blResultEl = document.getElementById('bluff-luck-result');
+
+            let blGameInProgress = false;
+            let blActualHand = [];
+            let blIsBluff = false;
+
+            function updateBluffLuckBalance() {
+                if(gameStats.wallet) {
+                    bluffLuckBalanceEl.textContent = `₹${gameStats.wallet}`;
+                }
+            }
+            
+            function resetBluffLuckUI() {
+                blGameInProgress = false;
+                bluffLuckBetAmountEl.disabled = false;
+                blStartBtn.classList.remove('hidden');
+                blGuessButtons.classList.add('hidden');
+                blActualHandContainer.classList.add('hidden');
+                blResultEl.textContent = '';
+                blComputerHandDiv.querySelectorAll('.dice').forEach(d => d.textContent = '?');
+                blActualHandDiv.querySelectorAll('.dice').forEach(d => d.textContent = '?');
+            }
+
+            blStartBtn.addEventListener('click', () => {
+                if (blGameInProgress) return;
+
+                const betAmount = parseInt(bluffLuckBetAmountEl.value);
+                 if (isNaN(betAmount) || betAmount <= 0) {
+                    blResultEl.textContent = 'Invalid bet amount.';
+                    blResultEl.classList.add('text-red-500');
+                    return;
+                }
+                if (betAmount > gameStats.wallet) {
+                    blResultEl.textContent = "You don't have enough funds!";
+                    blResultEl.classList.add('text-red-500');
+                    return;
+                }
+
+                blGameInProgress = true;
+                bluffLuckBetAmountEl.disabled = true;
+                blResultEl.textContent = '';
+                blStartBtn.classList.add('hidden');
+                blGuessButtons.classList.remove('hidden');
+
+                // Game logic starts
+                gameStats.wallet -= betAmount;
+                gameStats.gamesPlayed++;
+                gameStats.totalWagered += betAmount;
+                updateBluffLuckBalance();
+
+                blActualHand = [
+                    Math.floor(Math.random() * 6) + 1,
+                    Math.floor(Math.random() * 6) + 1,
+                    Math.floor(Math.random() * 6) + 1
+                ];
+                
+                blIsBluff = Math.random() < 0.5;
+                let displayedHand;
+
+                if(blIsBluff) {
+                    const fakeNum = Math.floor(Math.random() * 6) + 1;
+                    displayedHand = [fakeNum, fakeNum, fakeNum];
+                } else {
+                    displayedHand = [...blActualHand];
+                }
+
+                const computerDice = blComputerHandDiv.querySelectorAll('.dice');
+                computerDice.forEach((dice, index) => {
+                    dice.textContent = displayedHand[index];
+                });
+
+            });
+
+            function handleBluffGuess(userGuessedBluff) {
+                if (!blGameInProgress) return;
+                
+                blGuessButtons.classList.add('hidden');
+                const betAmount = parseInt(bluffLuckBetAmountEl.value);
+
+                const isCorrect = userGuessedBluff === blIsBluff;
+                
+                const actualDice = blActualHandDiv.querySelectorAll('.dice');
+                actualDice.forEach((dice, index) => {
+                    dice.textContent = blActualHand[index];
+                });
+                blActualHandContainer.classList.remove('hidden');
+                
+                if (isCorrect) {
+                    const winnings = betAmount * 4;
+                    gameStats.wallet += winnings;
+                    gameStats.gamesWon++;
+                    gameStats.totalWon += winnings;
+                    blResultEl.textContent = `Correct! You win ₹${winnings}!`;
+                    blResultEl.className = 'h-6 mb-4 text-lg font-semibold text-green-500';
+                } else {
+                    blResultEl.textContent = `Wrong! You lost ₹${betAmount}.`;
+                    blResultEl.className = 'h-6 mb-4 text-lg font-semibold text-red-500';
+                }
+
+                updateBluffLuckBalance();
+                saveGameStats();
+                updateMainStatsUI();
+
+                setTimeout(resetBluffLuckUI, 3000);
+            }
+
+            blGuessBluffBtn.addEventListener('click', () => handleBluffGuess(true));
+            blGuessNoBluffBtn.addEventListener('click', () => handleBluffGuess(false));
+
+            // --- Range Riddle Game Logic ---
+            const nlWalletEl = document.getElementById('nl-wallet');
+            const nlBetAmountEl = document.getElementById('nl-bet-amount');
+            const nlMultiplierBtns = document.querySelectorAll('.nl-multiplier-btn');
+            const nlMessageEl = document.getElementById('nl-message');
+            const numberLineContainer = document.getElementById('number-line-container');
+            const nlResetBtn = document.getElementById('nl-reset-btn');
+
+            let gameStats = {};
+            let nlMultiplier = 0;
+            let nlGameInProgress = false;
+
+            function saveGameStats() {
+                localStorage.setItem('flipOfFateData', JSON.stringify(gameStats));
+            }
+
+            function updateMainStatsUI(isInitialLoad = false) {
+                const { wallet, totalWagered, totalWon, gamesPlayed, gamesWon } = gameStats;
+                const winRate = gamesPlayed > 0 ? (gamesWon / gamesPlayed * 100) : 0;
+
+                balanceStatEl.dataset.target = wallet;
+                gamesPlayedStatEl.dataset.target = gamesPlayed;
+                totalWageredStatEl.dataset.target = totalWagered;
+                totalWonStatEl.dataset.target = totalWon;
+                winRateStatEl.dataset.target = winRate.toFixed(1);
+
+                if (isInitialLoad) {
+                    balanceStatEl.textContent = wallet.toLocaleString();
+                    gamesPlayedStatEl.textContent = gamesPlayed;
+                    totalWageredStatEl.textContent = totalWagered.toLocaleString();
+                    totalWonStatEl.textContent = totalWon.toLocaleString();
+                    winRateStatEl.textContent = winRate.toFixed(1);
+                    // Only run the observer on initial load
+                     document.querySelectorAll('.stat-number').forEach(counter => observer.observe(counter));
+                } else {
+                    // For subsequent updates, just run the animation directly
+                    document.querySelectorAll('.stat-number').forEach(counter => animateCounter(counter));
+                }
+            }
+
+            function loadGameStats() {
+                const savedData = localStorage.getItem('flipOfFateData');
+                if (savedData) {
+                    gameStats = JSON.parse(savedData);
+                    // Ensure all properties exist in case of old data format
+                    gameStats.wallet = gameStats.wallet ?? 100;
+                    gameStats.totalWagered = gameStats.totalWagered ?? 0;
+                    gameStats.totalWon = gameStats.totalWon ?? 0;
+                    gameStats.gamesPlayed = gameStats.gamesPlayed ?? 0;
+                    gameStats.gamesWon = gameStats.gamesWon ?? 0;
+                } else {
+                    gameStats = { wallet: 100, totalWagered: 0, totalWon: 0, gamesPlayed: 0, gamesWon: 0 };
+                }
+                updateWalletUI();
+                updateMainStatsUI(true);
+            }
+
+            function updateWalletUI() {
+                nlWalletEl.textContent = `₹${gameStats.wallet}`;
+            }
+
+            function resetNlGameState() {
+                nlGameInProgress = false;
+                nlMessageEl.textContent = 'Choose a multiplier to begin.';
+                nlMessageEl.className = 'h-12 text-lg font-semibold flex items-center justify-center';
+                numberLineContainer.innerHTML = '<div class="text-slate-400">Choose a multiplier to begin.</div>';
+                nlBetAmountEl.disabled = false;
+                nlMultiplierBtns.forEach(btn => btn.disabled = false);
+            }
+            
+            nlResetBtn.addEventListener('click', () => {
+                gameStats = { wallet: 100, totalWagered: 0, totalWon: 0, gamesPlayed: 0, gamesWon: 0 };
+                saveGameStats();
+                loadGameStats();
+                resetNlGameState();
+                nlMultiplierBtns.forEach(btn => btn.classList.remove('bg-indigo-500'));
+            });
+
+            nlMultiplierBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (nlGameInProgress) return;
+                    nlMultiplier = parseInt(btn.dataset.multiplier);
+                    nlMultiplierBtns.forEach(b => b.classList.remove('bg-indigo-500'));
+                    btn.classList.add('bg-indigo-500');
+                    generateSegments(nlMultiplier);
+                    nlMessageEl.textContent = 'Click a segment to place your bet!';
+                });
+            });
+
+            function generateSegments(multiplier) {
+                numberLineContainer.innerHTML = '';
+                const segmentSize = 100 / multiplier;
+                for (let i = 0; i < multiplier; i++) {
+                    const start = Math.floor(i * segmentSize) + 1;
+                    const end = Math.floor((i + 1) * segmentSize);
+                    const segment = document.createElement('div');
+                    segment.className = 'segment';
+                    segment.textContent = `${start}-${end === 99 ? 100 : end}`;
+                    if (multiplier === 16) segment.classList.add('text-xs');
+                    segment.dataset.start = start;
+                    segment.dataset.end = end === 99 ? 100 : end;
+                    segment.dataset.index = i;
+                    segment.addEventListener('click', () => handleGuess(segment));
+                    numberLineContainer.appendChild(segment);
+                }
+            }
+
+            function handleGuess(selectedSegment) {
+                if (nlGameInProgress || !nlMultiplier) return;
+                
+                const betAmount = parseInt(nlBetAmountEl.value);
+                if (isNaN(betAmount) || betAmount <= 0) {
+                    nlMessageEl.textContent = 'Please enter a valid bet amount.';
+                    nlMessageEl.className = 'h-12 text-lg font-semibold flex items-center justify-center text-red-500';
+                    return;
+                }
+                if (betAmount > gameStats.wallet) {
+                    nlMessageEl.textContent = "You don't have enough funds!";
+                    nlMessageEl.className = 'h-12 text-lg font-semibold flex items-center justify-center text-red-500';
+                    return;
+                }
+
+                nlGameInProgress = true;
+                nlBetAmountEl.disabled = true;
+                nlMultiplierBtns.forEach(btn => btn.disabled = true);
+                
+                gameStats.wallet -= betAmount;
+                updateWalletUI();
+                
+                selectedSegment.classList.add('selected');
+                nlMessageEl.textContent = 'Revealing number...';
+                nlMessageEl.className = 'h-12 text-lg font-semibold flex items-center justify-center';
+
+                setTimeout(() => {
+                    const randomNumber = Math.floor(Math.random() * 100) + 1;
+                    const segments = numberLineContainer.querySelectorAll('.segment');
+                    let correctSegment;
+                    segments.forEach(seg => {
+                        const start = parseInt(seg.dataset.start);
+                        const end = parseInt(seg.dataset.end);
+                        if (randomNumber >= start && randomNumber <= end) correctSegment = seg;
+                    });
+
+                    const guessedStart = parseInt(selectedSegment.dataset.start);
+                    const guessedEnd = parseInt(selectedSegment.dataset.end);
+                    
+                    gameStats.gamesPlayed++;
+                    gameStats.totalWagered += betAmount;
+
+                    if (randomNumber >= guessedStart && randomNumber <= guessedEnd) {
+                        const winnings = betAmount * nlMultiplier;
+                        gameStats.wallet += winnings;
+                        gameStats.gamesWon++;
+                        gameStats.totalWon += winnings;
+                        nlMessageEl.textContent = `WIN! Number was ${randomNumber}. You won ₹${winnings}!`;
+                        nlMessageEl.className = 'h-12 text-lg font-semibold flex items-center justify-center text-green-500';
+                        selectedSegment.classList.add('correct');
+                    } else {
+                        nlMessageEl.textContent = `LOSE! The number was ${randomNumber}.`;
+                        nlMessageEl.className = 'h-12 text-lg font-semibold flex items-center justify-center text-red-500';
+                        selectedSegment.classList.add('incorrect');
+                        correctSegment.classList.add('correct');
+                    }
+                    selectedSegment.classList.remove('selected');
+                    
+                    saveGameStats();
+                    updateWalletUI();
+                    updateMainStatsUI();
+
+                    setTimeout(() => {
+                        resetNlGameState();
+                    }, 3000);
+
+                }, 1500);
+            }
+            
+            loadGameStats();
+        });
+    </script>
+
+</body>
+</html>
+
